@@ -1,4 +1,3 @@
-install.packages("tidyverse")
 library(tidyverse)   # dplyr, tidyr, tibble, ggplot2
 library(ggrepel)
 library(knitr)
@@ -6,17 +5,23 @@ library(car)
 library(randomForest)
 # Function: Run regression and plot
 plotmvpos <- function(df, season_label) {
-  model <- lm(leaguepos ~ totalmarketvalm, data = df)                                                                   
+  model <- lm(leaguepos ~ totalmarketvalm, data = df)
   print(paste("=== Season:", season_label, "==="))
   print(summary(model))
-  ggplot(df, aes(x = totalmarketvalm, y = leaguepos)) +                                                          
+  p <- ggplot(df, aes(x = totalmarketvalm, y = leaguepos)) +
     geom_point(color = "blue", size = 3) +
     geom_smooth(method = "lm", color = "red", se = TRUE) +
     geom_text(aes(label = Club), vjust = -0.5, size = 3, check_overlap = TRUE) +
-    labs( title = paste("Premier League", season_label, ": Market Value vs League Position"),
-          x = "Total Market Value (Million Euros)",
-          y = "Final League Position (1 = Champion)",
-          caption = "Red line: Linear regression") +theme_minimal() +scale_y_reverse(breaks = 1:20)}
+    labs(
+      title = paste("Premier League", season_label, ": Market Value vs League Position"),
+      x = "Total Market Value (Million Euros)",
+      y = "Final League Position (1 = Champion)",
+      caption = "Red line: Linear regression"
+    ) +
+    theme_minimal() +
+    scale_y_reverse(breaks = 1:20)
+  return(p)
+}
 
 # 2024–25 Data
 clubdata45 <- data.frame(Club = c("Manchester City", "Arsenal FC", "Liverpool FC", "Chelsea FC", 
@@ -55,12 +60,16 @@ clubdata2223 <- data.frame(
   leaguepos = c(1, 2, 12, 3, 5, 8, 4, 6, 7, 13, 18, 14, 20, 17, 16, 9, 19, 11, 10, 15)
 )
 
-# We Run all 4 plots & regressions 
-
-plotmvpos(clubdata45, "2024–25")
-plotmvpos(clubdata2324, "2023–24")
-plotmvpos(clubdata2223, "2022–23")
-plotmvpos(clubdata2223 %>% filter(Club != "Chelsea FC"), "2022–23 (No Chelsea)")
+# We Run all 4 plots & regressions
+dir.create("plots", showWarnings = FALSE)
+p_mv_24_25 <- plotmvpos(clubdata45, "2024–25")
+ggsave(filename = "plots/market_vs_pos_2024-25.png", plot = p_mv_24_25, width = 8, height = 6, dpi = 300)
+p_mv_23_24 <- plotmvpos(clubdata2324, "2023–24")
+ggsave(filename = "plots/market_vs_pos_2023-24.png", plot = p_mv_23_24, width = 8, height = 6, dpi = 300)
+p_mv_22_23 <- plotmvpos(clubdata2223, "2022–23")
+ggsave(filename = "plots/market_vs_pos_2022-23.png", plot = p_mv_22_23, width = 8, height = 6, dpi = 300)
+p_mv_22_23_noche <- plotmvpos(clubdata2223 %>% filter(Club != "Chelsea FC"), "2022–23 (No Chelsea)")
+ggsave(filename = "plots/market_vs_pos_2022-23_no_chelsea.png", plot = p_mv_22_23_noche, width = 8, height = 6, dpi = 300)
 
 # Data: 2022–23 
 clubdata2223 <- data.frame(
@@ -112,7 +121,7 @@ summary(reg_24_25)
 
 # Plot Function 
 leaguewage <- function(data, year_label) {
-  ggplot(data, aes(x = Grosspygbp, y = leaguepos, label = Club)) +
+  p <- ggplot(data, aes(x = Grosspygbp, y = leaguepos, label = Club)) +
     geom_point(color = "blue", size = 3) +
     geom_smooth(method = "lm", se = TRUE, color = "red", fill = "gray70") +
     geom_text_repel(size = 3, max.overlaps = 100) +
@@ -121,14 +130,23 @@ leaguewage <- function(data, year_label) {
       title = paste0("Premier League ", year_label, ": Wage Bill vs League Position"),
       x = "Gross Annual Wage Bill (GBP)",
       y = "Final League Position (1 = Champion)"
-    ) +theme_minimal(base_size = 13) +theme(plot.title = element_text(face = "bold", hjust = 0.5),
-                                            panel.grid.major = element_line(color = "gray80"),
-                                            panel.grid.minor = element_blank() )}
+    ) +
+    theme_minimal(base_size = 13) +
+    theme(
+      plot.title = element_text(face = "bold", hjust = 0.5),
+      panel.grid.major = element_line(color = "gray80"),
+      panel.grid.minor = element_blank()
+    )
+  return(p)
+}
 
 # Plots 
-leaguewage(clubdata2223, "2022–23")
-leaguewage(clubdata2324, "2023–24")
-leaguewage(clubdata45, "2024–25")
+p_wage_22_23 <- leaguewage(clubdata2223, "2022–23")
+ggsave(filename = "plots/wage_vs_pos_2022-23.png", plot = p_wage_22_23, width = 8, height = 6, dpi = 300)
+p_wage_23_24 <- leaguewage(clubdata2324, "2023–24")
+ggsave(filename = "plots/wage_vs_pos_2023-24.png", plot = p_wage_23_24, width = 8, height = 6, dpi = 300)
+p_wage_24_25 <- leaguewage(clubdata45, "2024–25")
+ggsave(filename = "plots/wage_vs_pos_2024-25.png", plot = p_wage_24_25, width = 8, height = 6, dpi = 300)
 
 # Data: 2022–23 season
 clubdata2223 <- data.frame(
@@ -177,7 +195,7 @@ clubdata45 <- data.frame(
 
 # Function to plot
 nettspendvpos <- function(data, season_label) {
-  ggplot(data, aes(x = nettspendM, y = leaguepos)) +
+  p <- ggplot(data, aes(x = nettspendM, y = leaguepos)) +
     geom_point(color = "blue", size = 3) +
     geom_smooth(method = "lm", color = "red", fill = "gray", alpha = 0.3) +
     geom_text_repel(aes(label = Club), size = 3.2) +
@@ -188,20 +206,25 @@ nettspendvpos <- function(data, season_label) {
       y = "Final League Position (1 = Champion)"
     ) +
     theme_minimal()
+  return(p)
 }
 
 # Run models and plot for all 3 seasons
 model_22_23 <- lm(leaguepos ~ nettspendM, data = clubdata2223)
 print(summary(model_22_23))
-nettspendvpos(clubdata2223, "2022–23")
+# plots and saves for net spend vs pos
+p_nett_22_23 <- nettspendvpos(clubdata2223, "2022–23")
+ggsave(filename = "plots/netspend_vs_pos_2022-23.png", plot = p_nett_22_23, width = 8, height = 6, dpi = 300)
 
 model_23_24 <- lm(leaguepos ~ nettspendM, data = clubdata2324)
 print(summary(model_23_24))
-nettspendvpos(clubdata2324, "2023–24")
+p_nett_23_24 <- nettspendvpos(clubdata2324, "2023–24")
+ggsave(filename = "plots/netspend_vs_pos_2023-24.png", plot = p_nett_23_24, width = 8, height = 6, dpi = 300)
 
 model_24_25 <- lm(leaguepos ~ nettspendM, data = clubdata45)
 print(summary(model_24_25))
-nettspendvpos(clubdata45, "2024–25")
+p_nett_24_25 <- nettspendvpos(clubdata45, "2024–25")
+ggsave(filename = "plots/netspend_vs_pos_2024-25.png", plot = p_nett_24_25, width = 8, height = 6, dpi = 300)
 # DATA 
 # 2022–23
 clubdata2223 <- data.frame(
